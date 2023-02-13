@@ -193,3 +193,7 @@ npm-debug.log
 yarn-error.log
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,node,vue,vuejs
+
+# Custom
+# Naver Data Labs API information
+.env
