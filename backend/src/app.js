@@ -47,30 +47,52 @@ app.get("/data", async (req, res) => {
     // });
 
     let trend_data = [];
-
-    await googleTrends.dailyTrends(
-      {
-        geo: "KR",
-      },
-      (err, results) => {
-        if (err) {
-          console.log(err);
-        } else {
-          const data = JSON.parse(results);
-          const trends = data.default.trendingSearchesDays[0].trendingSearches;
-
-          for (let i = 0; i < trends.length; i++) {
-            trend_data.push({
-              title: trends[i].title.query,
-              imageUrl: trends[i].image.imageUrl,
-              shareUrl: trends[i].shareUrl,
-            });
-          }
-        }
-      }
+    const now = new Date();
+    const oneYearAgo = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - 20
     );
 
-    console.log("response => " + JSON.stringify(trend_data));
+    for (let date = oneYearAgo; date <= now; date.setDate(date.getDate() + 1)) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      let cur_date = `${year}-${month}-${day}`;
+
+      await googleTrends.dailyTrends(
+        {
+          trendDate: new Date(cur_date),
+          geo: "KR",
+        },
+        (err, results) => {
+          if (err) {
+            console.log(err);
+          } else {
+            const data = JSON.parse(results);
+            const trends =
+              data.default.trendingSearchesDays[0].trendingSearches;
+
+            let daily_data = [];
+
+            for (let i = 0; i < trends.length; i++) {
+              daily_data.push({
+                title: trends[i].title.query,
+                imageUrl: trends[i].image.imageUrl,
+                shareUrl: trends[i].shareUrl,
+              });
+            }
+
+            trend_data.push({
+              date: cur_date,
+              daily_data: daily_data,
+            });
+
+            console.log("cur_daily_data => " + JSON.stringify(daily_data));
+          }
+        }
+      );
+    }
 
     return res.json(trend_data);
   } catch (error) {
