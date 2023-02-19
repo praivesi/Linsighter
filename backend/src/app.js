@@ -51,7 +51,8 @@ app.get("/data", async (req, res) => {
     const oneYearAgo = new Date(
       now.getFullYear(),
       now.getMonth(),
-      now.getDate() - 20
+      //   now.getDate() - 20
+      now.getDate()
     );
 
     for (let date = oneYearAgo; date <= now; date.setDate(date.getDate() + 1)) {
@@ -76,11 +77,13 @@ app.get("/data", async (req, res) => {
             let daily_data = [];
 
             for (let i = 0; i < trends.length; i++) {
-              daily_data.push({
+              today_data = {
                 title: trends[i].title.query,
                 imageUrl: trends[i].image.imageUrl,
                 shareUrl: trends[i].shareUrl,
-              });
+              };
+
+              daily_data.push(today_data);
             }
 
             trend_data.push({
@@ -92,6 +95,35 @@ app.get("/data", async (req, res) => {
           }
         }
       );
+
+      const deep_start_date = new Date(
+        Date.now() - 365 * 24 * 60 * 60 * 1000
+        // Date.now() - 10 * 24 * 60 * 60 * 1000
+      );
+      const deep_end_date = new Date();
+
+      for (var i = 0; i < trend_data.length; i++) {
+        for (var j = 0; j < trend_data[i].daily_data.length; j++) {
+          console.log("keyword = " + trend_data[i].daily_data[j].title);
+          const options = {
+            keyword: trend_data[i].daily_data[j].title,
+            startTime: deep_start_date,
+            endTime: deep_end_date,
+          };
+
+          await googleTrends.interestOverTime(options, function (err, results) {
+            if (err) {
+              console.log("Error: ", err);
+            } else {
+              trend_data[i].daily_data[j].deep_data = JSON.parse(results);
+              console.log(
+                "deep_data => " +
+                  JSON.stringify(trend_data[i].daily_data[j].deep_data)
+              );
+            }
+          });
+        }
+      }
     }
 
     return res.json(trend_data);
